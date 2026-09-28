@@ -20,12 +20,12 @@ go run ./cmd/wavelet-matrix --text banana --rank 'a 3' --select 'a 2' --kth '0 2
   `KthSmallest` 与「把区间拷出来排序」的结果逐项一致。
 - 规模：10^6 个符号、rank/select/kth 各 10^5 次查询要在 2 秒内完成，内存 O(n·log σ)；不许每次查询重排区间。
 
-## 现在的行为
+## 实现
 
-- `Build` 只存原序列和一份排好序的副本，没有位向量，也没有前缀 rank 表。
-- `Rank` 在排序副本上二分，返回整串的出现次数，完全忽略 `position`。
-- `Select` 返回 `ErrNoSelect`。
-- `KthSmallest` 直接在整串排序结果上取第 k 个，区间参数只用来做合法性检查。
+- `Build` 按符号的每一位分层，稳定划分后存位向量和每 64 位的前缀 rank 表。
+- `Rank` 沿各层把 `[0, position)` 映射到末层，只数前缀，不回扫原序列。
+- `Select` 先正向定位 value 的稳定段，再逐层逆向上溯，是 rank 的逆运算。
+- `KthSmallest` 逐位收窄区间，只在 `[left, right)` 内取第 k 小，不重排区间。
 
 ## 计划新增的能力
 
